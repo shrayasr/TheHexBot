@@ -95,11 +95,11 @@ Processing:
                         {
                             Console.WriteLine("File not generated previously, generating");
                             
-                            using (FileStream outp = File.OpenWrite(imageFile))
+                            using (FileStream outFileStream = File.OpenWrite(imageFile))
                             {
                                 new Image(100, 100)
                                 .BackgroundColor(new Color(hex))
-                                .Save(outp);
+                                .Save(outFileStream);
                             }
                         }
                         else
