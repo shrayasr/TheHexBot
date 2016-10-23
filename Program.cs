@@ -14,7 +14,7 @@ namespace TheHexBot
     {
         private static string _previouslyProcessedTweetsFile = "previously.json";
         private static string _configurationFile = "configuration.json";
-        private static string _generatedImagesLocation = "gen"; // don't end it with a slash
+        private static string _generatedImagesFolder = "gen"; // don't end it with a slash
 
         private static List<long> _previouslyProcessedTweets = new List<long>();
 
@@ -27,6 +27,9 @@ namespace TheHexBot
                 Console.WriteLine("No configuration found. Can't continue");
                 return;
             }
+
+            if (!Directory.Exists(_generatedImagesFolder))
+                Directory.CreateDirectory(_generatedImagesFolder);
 
             _configuration = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(_configurationFile));
 
@@ -86,7 +89,7 @@ Processing:
 
                     try
                     {
-                        var imageFile = _generatedImagesLocation + "/" + $"{hex}.jpg";
+                        var imageFile = _generatedImagesFolder + "/" + $"{hex}.jpg";
 
                         if (!File.Exists(imageFile))
                         {
