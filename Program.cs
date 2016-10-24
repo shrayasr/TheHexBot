@@ -35,7 +35,7 @@ namespace TheHexBot
 
             if (File.Exists(_previouslyProcessedTweetsFile))
                 _previouslyProcessedTweets = JsonConvert.DeserializeObject<List<long>>(File.ReadAllText(_previouslyProcessedTweetsFile));
-            
+
             Auth.SetUserCredentials(
                 _configuration.ConsumerKey,
                 _configuration.ConsumerSecret,
@@ -44,14 +44,15 @@ namespace TheHexBot
 
             RateLimit.RateLimitTrackerMode = RateLimitTrackerMode.TrackOnly;
 
-            TweetinviEvents.QueryBeforeExecute += (sender, args) => {
+            TweetinviEvents.QueryBeforeExecute += (sender, args) =>
+            {
 
                 var q = RateLimit.GetQueryRateLimit(args.QueryURL);
 
                 System.Console.WriteLine("{0} {1} {2} {3}", args.QueryURL, q?.Limit, q?.Remaining, q?.ResetDateTimeInSeconds);
 
                 if (q != null && q.Remaining == 0)
-                        Console.WriteLine("Rate limit hit");
+                    Console.WriteLine("Rate limit hit");
             };
 
             var mentionsTL = Timeline.GetMentionsTimeline();
@@ -94,7 +95,7 @@ Processing:
                         if (!File.Exists(imageFile))
                         {
                             Console.WriteLine("File not generated previously, generating");
-                            
+
                             using (FileStream outFileStream = File.OpenWrite(imageFile))
                             {
                                 new Image(100, 100)
@@ -115,7 +116,6 @@ Processing:
                             InReplyToTweetId = mention.Id,
                             Medias = new List<IMedia> { media }
                         });
-
                     }
 
                     catch (Exception ex)
@@ -133,10 +133,10 @@ Processing:
 
         class Configuration
         {
-            public string ConsumerKey {get; set;}
-            public string ConsumerSecret {get; set;}
-            public string UserAccessToken {get; set;}
-            public string UserAccessSecret {get; set;}
+            public string ConsumerKey { get; set; }
+            public string ConsumerSecret { get; set; }
+            public string UserAccessToken { get; set; }
+            public string UserAccessSecret { get; set; }
         }
 
     }
