@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -20,6 +21,9 @@ namespace TheHexBot
 
         private static Configuration _configuration;
 
+        private static bool _firstRun = false;
+        private static int _tweetsPerPage = 5;
+
         public static void Main(string[] cmdlineArgs)
         {
             if (!File.Exists(_configurationFile))
@@ -35,6 +39,8 @@ namespace TheHexBot
 
             if (File.Exists(_previouslyProcessedTweetsFile))
                 _previouslyProcessedTweets = JsonConvert.DeserializeObject<List<long>>(File.ReadAllText(_previouslyProcessedTweetsFile));
+            else
+                _firstRun = true;
 
             Auth.SetUserCredentials(
                 _configuration.ConsumerKey,
@@ -46,7 +52,6 @@ namespace TheHexBot
 
             TweetinviEvents.QueryBeforeExecute += (sender, args) =>
             {
-
                 var q = RateLimit.GetQueryRateLimit(args.QueryURL);
 
                 System.Console.WriteLine("{0} {1} {2} {3}", args.QueryURL, q?.Limit, q?.Remaining, q?.ResetDateTimeInSeconds);
@@ -55,86 +60,110 @@ namespace TheHexBot
                     Console.WriteLine("Rate limit hit");
             };
 
-            var mentionsTL = Timeline.GetMentionsTimeline();
-
-            if (mentionsTL != null)
+            var firstPage = true;
+            var pageNo = 1;
+            while (true)
             {
-                foreach (var mention in mentionsTL)
-                    ProcessMention(mention);
-                    
-                File.WriteAllText(_previouslyProcessedTweetsFile, JsonConvert.SerializeObject(_previouslyProcessedTweets));
+                System.Console.WriteLine("Page: " + pageNo++);
+
+                var mentionTLParams = new MentionsTimelineParameters();
+
+                mentionTLParams.MaximumNumberOfTweetsToRetrieve = _tweetsPerPage;
+
+                if (!_firstRun)
+                    mentionTLParams.SinceId = _previouslyProcessedTweets.Max();
+
+                if (!firstPage)
+                    mentionTLParams.MaxId = _previouslyProcessedTweets.Min() - 1;
+
+                if (firstPage)
+                    firstPage = false;
+
+                var mentionsTLPage = Timeline.GetMentionsTimeline(mentionTLParams);
+
+                if (mentionsTLPage == null || mentionsTLPage.Count() == 0)
+                {
+                    System.Console.WriteLine("No mentions to process");
+                    break;
+                }
+                else
+                {
+                    foreach (var mention in mentionsTLPage)
+                        ProcessMention(mention);
+                }
             }
+
+            File.WriteAllText(_previouslyProcessedTweetsFile, JsonConvert.SerializeObject(_previouslyProcessedTweets));
         }
 
         private static void ProcessMention(IMention mention)
         {
-                    Console.WriteLine($@"
+            Console.WriteLine($@"
 Processing:
     ID: {mention.Id}
     Text: {mention.Text}");
 
-                    if (_previouslyProcessedTweets.Contains(mention.Id))
+            if (_previouslyProcessedTweets.Contains(mention.Id))
+            {
+                Console.WriteLine($"    {mention.Id} already processed");
+                return; // already processed, move on
+            }
+            else
+                _previouslyProcessedTweets.Add(mention.Id);
+
+            var pattern = @"\#[0-9a-f]{3,6}";
+            var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+
+            var match = regex.Match(mention.Text);
+
+            if (!match.Success)
+            {
+                Console.WriteLine("    No hex code found in {mention.Text}");
+
+                Tweet.PublishTweetInReplyTo($"@{mention.CreatedBy.ScreenName} couldn't find a hex code in your tweet, yo!", mention.Id);
+                return;
+            }
+
+            var hex = match.Value;
+
+            try
+            {
+                var imageFile = _generatedImagesFolder + "/" + $"{hex}.jpg";
+
+                if (!File.Exists(imageFile))
+                {
+                    Console.WriteLine("File not generated previously, generating");
+
+                    using (FileStream outFileStream = File.OpenWrite(imageFile))
                     {
-                        Console.WriteLine($"    {mention.Id} already processed");
-                        return; // already processed, move on
+                        new Image(100, 100)
+                        .BackgroundColor(new Color(hex))
+                        .Save(outFileStream);
                     }
-                    else
-                        _previouslyProcessedTweets.Add(mention.Id);
+                }
+                else
+                {
+                    Console.WriteLine("    File already generated, returning from cache");
+                }
 
-                    var pattern = @"\#[0-9a-f]{3,6}";
-                    var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                var attachment = File.ReadAllBytes(imageFile);
+                var media = Upload.UploadImage(attachment);
 
-                    var match = regex.Match(mention.Text);
+                Tweet.PublishTweet($"@{mention.CreatedBy.ScreenName} Here you go!", new PublishTweetOptionalParameters
+                {
+                    InReplyToTweetId = mention.Id,
+                    Medias = new List<IMedia> { media }
+                });
+            }
 
-                    if (!match.Success)
-                    {
-                        Console.WriteLine("    No hex code found in {mention.Text}");
+            catch (Exception ex)
+            {
+                // Our problem, allow for reprocess
+                _previouslyProcessedTweets.Remove(mention.Id);
 
-                        Tweet.PublishTweetInReplyTo($"@{mention.CreatedBy.ScreenName} couldn't find a hex code in your tweet, yo!", mention.Id);
-                        return;
-                    }
-
-                    var hex = match.Value;
-
-                    try
-                    {
-                        var imageFile = _generatedImagesFolder + "/" + $"{hex}.jpg";
-
-                        if (!File.Exists(imageFile))
-                        {
-                            Console.WriteLine("File not generated previously, generating");
-
-                            using (FileStream outFileStream = File.OpenWrite(imageFile))
-                            {
-                                new Image(100, 100)
-                                .BackgroundColor(new Color(hex))
-                                .Save(outFileStream);
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("    File already generated, returning from cache");
-                        }
-
-                        var attachment = File.ReadAllBytes(imageFile);
-                        var media = Upload.UploadImage(attachment);
-
-                        Tweet.PublishTweet($"@{mention.CreatedBy.ScreenName} Here you go!", new PublishTweetOptionalParameters
-                        {
-                            InReplyToTweetId = mention.Id,
-                            Medias = new List<IMedia> { media }
-                        });
-                    }
-
-                    catch (Exception ex)
-                    {
-                        // Our problem, allow for reprocess
-                        _previouslyProcessedTweets.Remove(mention.Id);
-
-                        Console.WriteLine(ex.StackTrace);
-                        Tweet.PublishTweetInReplyTo($"@{mention.CreatedBy.ScreenName} Some problem occured. Sorry. I'll inform my master", mention.Id);
-                    }
-
+                Console.WriteLine(ex.StackTrace);
+                Tweet.PublishTweetInReplyTo($"@{mention.CreatedBy.ScreenName} Some problem occured. Sorry. I'll inform my master", mention.Id);
+            }
         }
 
         class Configuration
