@@ -52,12 +52,19 @@ namespace TheHexBot
 
             TweetinviEvents.QueryBeforeExecute += (sender, args) =>
             {
-                var q = RateLimit.GetQueryRateLimit(args.QueryURL);
+                var queryRateLimits = RateLimit.GetQueryRateLimit(args.QueryURL);
 
-                System.Console.WriteLine("{0} {1} {2} {3}", args.QueryURL, q?.Limit, q?.Remaining, q?.ResetDateTimeInSeconds);
+                if (queryRateLimits != null)
+                {
+                    if (queryRateLimits.Remaining > 0)
+                    {
+                        // process
+                        return;
+                    }
 
-                if (q != null && q.Remaining == 0)
-                    Console.WriteLine("Rate limit hit");
+                    args.Cancel = true;
+                    System.Console.WriteLine("ERROR: Rate limit hit\nQuery: " + args.QueryURL);
+                } 
             };
 
             var firstPage = true;
@@ -66,18 +73,19 @@ namespace TheHexBot
             {
                 System.Console.WriteLine("Page: " + pageNo++);
 
-                var mentionTLParams = new MentionsTimelineParameters();
+                if (firstPage)
+                    firstPage = false;
 
-                mentionTLParams.MaximumNumberOfTweetsToRetrieve = _tweetsPerPage;
+                var mentionTLParams = new MentionsTimelineParameters
+                {
+                    MaximumNumberOfTweetsToRetrieve = _tweetsPerPage
+                };
 
                 if (!_firstRun)
                     mentionTLParams.SinceId = _previouslyProcessedTweets.Max();
 
                 if (!firstPage)
                     mentionTLParams.MaxId = _previouslyProcessedTweets.Min() - 1;
-
-                if (firstPage)
-                    firstPage = false;
 
                 var mentionsTLPage = Timeline.GetMentionsTimeline(mentionTLParams);
 
