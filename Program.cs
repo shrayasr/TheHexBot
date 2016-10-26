@@ -58,8 +58,16 @@ namespace TheHexBot
             var mentionsTL = Timeline.GetMentionsTimeline();
 
             if (mentionsTL != null)
+            {
                 foreach (var mention in mentionsTL)
-                {
+                    ProcessMention(mention);
+                    
+                File.WriteAllText(_previouslyProcessedTweetsFile, JsonConvert.SerializeObject(_previouslyProcessedTweets));
+            }
+        }
+
+        private static void ProcessMention(IMention mention)
+        {
                     Console.WriteLine($@"
 Processing:
     ID: {mention.Id}
@@ -68,7 +76,7 @@ Processing:
                     if (_previouslyProcessedTweets.Contains(mention.Id))
                     {
                         Console.WriteLine($"    {mention.Id} already processed");
-                        continue; // already processed, move on
+                        return; // already processed, move on
                     }
                     else
                         _previouslyProcessedTweets.Add(mention.Id);
@@ -127,8 +135,6 @@ Processing:
                         Tweet.PublishTweetInReplyTo($"@{mention.CreatedBy.ScreenName} Some problem occured. Sorry. I'll inform my master", mention.Id);
                     }
 
-                    File.WriteAllText(_previouslyProcessedTweetsFile, JsonConvert.SerializeObject(_previouslyProcessedTweets));
-                }
         }
 
         class Configuration
