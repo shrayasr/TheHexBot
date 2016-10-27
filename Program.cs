@@ -126,6 +126,9 @@ namespace TheHexBot
             System.Console.WriteLine("");
             System.Console.WriteLine("ID: " + mention.Id);
             System.Console.WriteLine("Text: " + mention.Text);
+            System.Console.WriteLine("Has Quoted tweet: " + (mention.QuotedTweet != null));
+            System.Console.WriteLine("Quoted ID: " + mention.QuotedTweet?.Id);
+            System.Console.WriteLine("Quoted Text: " + mention.QuotedTweet?.Text);
             System.Console.WriteLine("");
 
             _previouslyProcessedTweets.Add(mention.Id);
@@ -149,7 +152,11 @@ Processing:
             var pattern = @"\#?[0-9a-f]{3,6}";
             var regex = new Regex(pattern, RegexOptions.IgnoreCase);
 
-            var match = regex.Match(mention.Text);
+            var textToMatch = mention.Text;
+            if (mention.QuotedTweet != null)
+                textToMatch = mention.QuotedTweet.Text;
+
+            var match = regex.Match(textToMatch);
 
             if (!match.Success)
             {
@@ -192,6 +199,8 @@ Processing:
                     InReplyToTweetId = mention.Id,
                     Medias = new List<IMedia> { media }
                 });
+
+                Console.WriteLine("    Replied!");
             }
 
             catch (Exception ex)
