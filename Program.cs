@@ -24,6 +24,8 @@ namespace TheHexBot
         private static bool _firstRun = false;
         private static int _tweetsPerPage = 5;
 
+        private static bool _isDryRun = false;
+
         public static void Main(string[] cmdlineArgs)
         {
             if (!File.Exists(_configurationFile))
@@ -32,10 +34,18 @@ namespace TheHexBot
                 return;
             }
 
-            if (!Directory.Exists(_generatedImagesFolder))
-                Directory.CreateDirectory(_generatedImagesFolder);
+            if (cmdlineArgs.Contains("--dryrun"))
+                _isDryRun = true;
+
+            Console.WriteLine("Dry run: " + _isDryRun);
 
             _configuration = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(_configurationFile));
+
+            if (_configuration.CacheDir != null && _configuration.CacheDir.Trim().Length > 0)
+                _generatedImagesFolder = _configuration.CacheDir;
+
+            if (!Directory.Exists(_generatedImagesFolder))
+                Directory.CreateDirectory(_generatedImagesFolder);
 
             if (File.Exists(_previouslyProcessedTweetsFile))
                 _previouslyProcessedTweets = JsonConvert.DeserializeObject<List<long>>(File.ReadAllText(_previouslyProcessedTweetsFile));
@@ -73,9 +83,6 @@ namespace TheHexBot
             {
                 System.Console.WriteLine("Page: " + pageNo++);
 
-                if (firstPage)
-                    firstPage = false;
-
                 var mentionTLParams = new MentionsTimelineParameters
                 {
                     MaximumNumberOfTweetsToRetrieve = _tweetsPerPage
@@ -97,11 +104,29 @@ namespace TheHexBot
                 else
                 {
                     foreach (var mention in mentionsTLPage)
-                        ProcessMention(mention);
+                    {
+                        if (_isDryRun)
+                            ShowMention(mention);
+                        else
+                            ProcessMention(mention);
+                    }
                 }
+
+                if (firstPage)
+                    firstPage = false;
             }
 
             File.WriteAllText(_previouslyProcessedTweetsFile, JsonConvert.SerializeObject(_previouslyProcessedTweets));
+        }
+
+        private static void ShowMention(IMention mention)
+        {
+            System.Console.WriteLine("");
+            System.Console.WriteLine("ID: " + mention.Id);
+            System.Console.WriteLine("Text: " + mention.Text);
+            System.Console.WriteLine("");
+
+            _previouslyProcessedTweets.Add(mention.Id);
         }
 
         private static void ProcessMention(IMention mention)
@@ -180,6 +205,7 @@ Processing:
             public string ConsumerSecret { get; set; }
             public string UserAccessToken { get; set; }
             public string UserAccessSecret { get; set; }
+            public string CacheDir { get; set; }
         }
 
     }
