@@ -144,7 +144,7 @@ Processing:
             else
                 _previouslyProcessedTweets.Add(mention.Id);
 
-            var pattern = @"\#[0-9a-f]{3,6}";
+            var pattern = @"\#?[0-9a-f]{3,6}";
             var regex = new Regex(pattern, RegexOptions.IgnoreCase);
 
             var match = regex.Match(mention.Text);
@@ -158,6 +158,9 @@ Processing:
             }
 
             var hex = match.Value;
+
+            if (!hex.StartsWith("#"))
+                hex = "#" + hex;
 
             try
             {
