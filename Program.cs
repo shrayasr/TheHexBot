@@ -77,6 +77,8 @@ namespace TheHexBot
                 } 
             };
 
+            Console.WriteLine(DateTime.Now);
+
             var firstPage = true;
             var pageNo = 1;
             while (true)
