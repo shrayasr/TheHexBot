@@ -187,7 +187,7 @@ Processing:
                 var attachment = File.ReadAllBytes(imageFile);
                 var media = Upload.UploadImage(attachment);
 
-                Tweet.PublishTweet($"@{mention.CreatedBy.ScreenName} Here you go!", new PublishTweetOptionalParameters
+                Tweet.PublishTweet($"@{mention.CreatedBy.ScreenName} Found {hex} in your tweet. Here you go!", new PublishTweetOptionalParameters
                 {
                     InReplyToTweetId = mention.Id,
                     Medias = new List<IMedia> { media }
