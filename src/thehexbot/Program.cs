@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using ImageProcessorCore;
+using ImageSharp;
 using Newtonsoft.Json;
 using Tweetinvi;
 using Tweetinvi.Parameters;
@@ -182,7 +182,7 @@ Processing:
                     using (FileStream outFileStream = File.OpenWrite(imageFile))
                     {
                         new Image(100, 100)
-                        .BackgroundColor(new Color(hex))
+                        .BackgroundColor(Color.FromHex(hex))
                         .Save(outFileStream);
                     }
                 }
