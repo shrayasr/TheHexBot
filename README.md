@@ -13,4 +13,4 @@ Tweet to her with one hex code and she'll reply with a 100x100 image with that c
 - https://github.com/linvi/tweetinvi/wiki/Streams#how-to-use-the-streams
 - https://github.com/linvi/tweetinvi/wiki/Users
 - https://github.com/linvi/tweetinvi/wiki/Tweets
-- https://github.com/JimBobSquarePants/ImageProcessor
+- https://github.com/SixLabors/ImageSharp
