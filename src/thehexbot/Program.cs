@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using ImageSharp;
+using SixLabors.ImageSharp;
 using Newtonsoft.Json;
 using Tweetinvi;
 using Tweetinvi.Parameters;
@@ -168,22 +168,23 @@ Processing:
 
             var hex = match.Value;
 
-            if (!hex.StartsWith("#"))
-                hex = "#" + hex;
+            if (hex.StartsWith("#"))
+                hex = hex.Substring(1);
 
             try
             {
-                var imageFile = _generatedImagesFolder + "/" + $"{hex}.jpg";
+                var imageFile = Path.Combine(_generatedImagesFolder, $"{hex}.jpg");
 
                 if (!File.Exists(imageFile))
                 {
                     Console.WriteLine("File not generated previously, generating");
 
-                    using (FileStream outFileStream = File.OpenWrite(imageFile))
+                    using (Image<Rgba32> image = new Image<Rgba32>(100, 100))
                     {
-                        new Image(100, 100)
-                        .BackgroundColor(Color.FromHex(hex))
-                        .Save(outFileStream);
+                        image
+                            .Mutate(ctx => ctx.BackgroundColor(Rgba32.FromHex(hex)));
+
+                        image.Save(imageFile);
                     }
                 }
                 else
