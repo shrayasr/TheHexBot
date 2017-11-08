@@ -196,7 +196,7 @@ Processing:
                 var attachment = File.ReadAllBytes(imageFile);
                 var media = Upload.UploadImage(attachment);
 
-                // replies to all the mentions in the tweet skipping the bot, because it will be tweet itselfgit s
+                // replies to all the mentions in the tweet skipping the bot, because it will be tweet itself
                 foreach (var name in mention.UserMentions)
                 {
                     if (name.ScreenName != "thehexbot")
