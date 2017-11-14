@@ -196,19 +196,17 @@ Processing:
                 var attachment = File.ReadAllBytes(imageFile);
                 var media = Upload.UploadImage(attachment);
 
-                // replies to all the mentions in the tweet skipping the bot, because it will be tweet itself
                 string mentionedNames = "@"+mention.CreatedBy.ScreenName+" ";
                 foreach (var name in mention.UserMentions)
                 {
+                    // skip the bot, because it will be tweet itself
                     if (name.ScreenName != "thehexbot")
                     {
                         mentionedNames += "@"+name.ScreenName+" ";
-                        
                     }
-
                 }
 
-                Tweet.PublishTweet($"{mentionedNames} Found {hex} in your tweet. Here you go!", new PublishTweetOptionalParameters
+                Tweet.PublishTweet($"{mentionedNames} Found '{hex}' in your tweet. Here you go!", new PublishTweetOptionalParameters
                         {
                             InReplyToTweetId = mention.Id,
                             Medias = new List<IMedia> { media }
