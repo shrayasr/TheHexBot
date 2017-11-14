@@ -74,7 +74,7 @@ namespace TheHexBot
 
                     args.Cancel = true;
                     System.Console.WriteLine("ERROR: Rate limit hit\nQuery: " + args.QueryURL);
-                } 
+                }
             };
 
             Console.WriteLine(DateTime.Now);
@@ -153,6 +153,7 @@ Processing:
             var regex = new Regex(pattern, RegexOptions.IgnoreCase);
 
             var textToMatch = mention.Text;
+
             if (mention.QuotedTweet != null)
                 textToMatch = mention.QuotedTweet.Text;
 
@@ -195,11 +196,23 @@ Processing:
                 var attachment = File.ReadAllBytes(imageFile);
                 var media = Upload.UploadImage(attachment);
 
-                Tweet.PublishTweet($"@{mention.CreatedBy.ScreenName} Found {hex} in your tweet. Here you go!", new PublishTweetOptionalParameters
+                // replies to all the mentions in the tweet skipping the bot, because it will be tweet itself
+                string mentionedNames = "@"+mention.CreatedBy.ScreenName+" ";
+                foreach (var name in mention.UserMentions)
                 {
-                    InReplyToTweetId = mention.Id,
-                    Medias = new List<IMedia> { media }
-                });
+                    if (name.ScreenName != "thehexbot")
+                    {
+                        mentionedNames += "@"+name.ScreenName+" ";
+                        
+                    }
+
+                }
+
+                Tweet.PublishTweet($"{mentionedNames} Found {hex} in your tweet. Here you go!", new PublishTweetOptionalParameters
+                        {
+                            InReplyToTweetId = mention.Id,
+                            Medias = new List<IMedia> { media }
+                        });
 
                 Console.WriteLine("    Replied!");
             }
