@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using Tweetinvi;
 using Tweetinvi.Parameters;
 using Tweetinvi.Models;
-
+using config = thehexbot.models;
 namespace TheHexBot
 {
     public class Program
@@ -19,7 +19,7 @@ namespace TheHexBot
 
         private static List<long> _previouslyProcessedTweets = new List<long>();
 
-        private static Configuration _configuration;
+        private static config.Configuration _configuration;
 
         private static bool _firstRun = false;
         private static int _tweetsPerPage = 5;
@@ -39,7 +39,7 @@ namespace TheHexBot
 
             Console.WriteLine("Dry run: " + _isDryRun);
 
-            _configuration = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(_configurationFile));
+            _configuration = JsonConvert.DeserializeObject<config.Configuration>(File.ReadAllText(_configurationFile));
 
             if (_configuration.CacheDir != null && _configuration.CacheDir.Trim().Length > 0)
                 _generatedImagesFolder = _configuration.CacheDir;
@@ -136,10 +136,8 @@ namespace TheHexBot
 
         private static void ProcessMention(IMention mention)
         {
-            Console.WriteLine($@"
-Processing:
-    ID: {mention.Id}
-    Text: {mention.Text}");
+            Console.WriteLine($@"Processing: ID: {mention.Id} Text: {mention.Text}");
+
 
             if (_previouslyProcessedTweets.Contains(mention.Id))
             {
@@ -225,14 +223,7 @@ Processing:
             }
         }
 
-        class Configuration
-        {
-            public string ConsumerKey { get; set; }
-            public string ConsumerSecret { get; set; }
-            public string UserAccessToken { get; set; }
-            public string UserAccessSecret { get; set; }
-            public string CacheDir { get; set; }
-        }
+        
 
     }
 }
