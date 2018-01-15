@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using Tweetinvi;
 using Tweetinvi.Parameters;
 using Tweetinvi.Models;
+using config = thehexbot.models;
 namespace TheHexBot
 {
     public class Program
@@ -18,7 +19,7 @@ namespace TheHexBot
 
         private static List<long> _previouslyProcessedTweets = new List<long>();
 
-        private static thehexbot.models.Configuration _configuration;
+        private static config.Configuration _configuration;
 
         private static bool _firstRun = false;
         private static int _tweetsPerPage = 5;
@@ -38,7 +39,7 @@ namespace TheHexBot
 
             Console.WriteLine("Dry run: " + _isDryRun);
 
-            _configuration = JsonConvert.DeserializeObject<thehexbot.models.Configuration>(File.ReadAllText(_configurationFile));
+            _configuration = JsonConvert.DeserializeObject<config.Configuration>(File.ReadAllText(_configurationFile));
 
             if (_configuration.CacheDir != null && _configuration.CacheDir.Trim().Length > 0)
                 _generatedImagesFolder = _configuration.CacheDir;
