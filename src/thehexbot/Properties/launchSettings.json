@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "thehexbot": {
+      "commandName": "Project",
+      "commandLineArgs": "--dryrun"
+    }
+  }
+}
