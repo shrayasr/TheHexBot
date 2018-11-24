@@ -200,7 +200,7 @@ Processing:
                 foreach (var name in mention.UserMentions)
                 {
                     // skip the bot, because it will be tweet itself
-                    if (name.ScreenName != "thehexbot" || (mentionedNames.Length + name.ScreenName < 236)) // dont add mentions if they exceed character limit
+                    if (name.ScreenName != "thehexbot" || (mentionedNames.Length + name.ScreenName.Length < 236)) // dont add mentions if they exceed character limit
                     {
                         mentionedNames += "@"+name.ScreenName+" ";
                     }
