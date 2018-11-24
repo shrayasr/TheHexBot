@@ -90,11 +90,14 @@ namespace TheHexBot
                     MaximumNumberOfTweetsToRetrieve = _tweetsPerPage
                 };
 
-                if (!_firstRun)
-                    mentionTLParams.SinceId = _previouslyProcessedTweets.Max();
+                if(_previouslyProcessedTweets.Count() > 0) {
+                    if (!_firstRun)
+                        mentionTLParams.SinceId = _previouslyProcessedTweets.Max();
 
-                if (!firstPage)
-                    mentionTLParams.MaxId = _previouslyProcessedTweets.Min() - 1;
+                    if (!firstPage)
+                        mentionTLParams.MaxId = _previouslyProcessedTweets.Min() - 1;
+
+                }
 
                 var mentionsTLPage = Timeline.GetMentionsTimeline(mentionTLParams);
 
