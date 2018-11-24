@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using Newtonsoft.Json;
 using Tweetinvi;
 using Tweetinvi.Parameters;
 using Tweetinvi.Models;
+using SixLabors.ImageSharp.Processing;
 
 namespace TheHexBot
 {
@@ -77,6 +79,8 @@ namespace TheHexBot
                 }
             };
 
+            
+
             Console.WriteLine(DateTime.Now);
 
             var firstPage = true;
@@ -111,9 +115,22 @@ namespace TheHexBot
                     foreach (var mention in mentionsTLPage)
                     {
                         if (_isDryRun)
+                        {
+
                             ShowMention(mention);
+
+                            if(mention.InReplyToStatusId.HasValue) {
+                                ITweet tweet = Tweet.GetTweet(mention.InReplyToStatusId.Value);
+
+                                System.Console.WriteLine("");
+                                System.Console.WriteLine("ID: " + tweet.Id);
+                                System.Console.WriteLine("Text: " + tweet.Text);
+                            }
+                        }
                         else
+                        {
                             ProcessMention(mention);
+                        }
                     }
                 }
 
@@ -156,9 +173,15 @@ Processing:
             var regex = new Regex(pattern, RegexOptions.IgnoreCase);
 
             var textToMatch = mention.Text;
+            ITweet inReplyToTweet = null;
 
             if (mention.QuotedTweet != null)
                 textToMatch = mention.QuotedTweet.Text;
+
+            if(mention.InReplyToStatusId.HasValue) {
+                inReplyToTweet = Tweet.GetTweet(mention.InReplyToStatusId.Value);
+                textToMatch = inReplyToTweet.Text;
+            }
 
             var match = regex.Match(textToMatch);
 
@@ -197,9 +220,15 @@ Processing:
                 }
 
                 var attachment = File.ReadAllBytes(imageFile);
-                var media = Upload.UploadImage(attachment);
+                var media = Upload.UploadBinary(attachment);
 
                 string mentionedNames = "@"+mention.CreatedBy.ScreenName+" ";
+
+                if(inReplyToTweet != null) 
+                {
+                    mentionedNames += "@" + inReplyToTweet.CreatedBy.ScreenName + " ";
+                }
+
                 foreach (var name in mention.UserMentions)
                 {
                     // skip the bot, because it will be tweet itself
